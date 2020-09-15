@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*- 
 
-##################################### 서버용 V6 ##########################################
+##################################### 서버용 V7 ##########################################
 #########################################################################################
 #########################################################################################
 #########################################################################################
 ###### 개발환경 : python 3.7.3														######
 ######			discord = 1.0.1														######
-######			discord.py = 1.3.3													######
+######			discord.py = 1.4.1													######
 ###### 모듈설치 : pip install setuptools --upgrade									######
 ######			pip install discord													######
 ######			pip install discord.py[voice]										######
@@ -3682,6 +3682,8 @@ class bankCog(commands.Cog):
 			return await ctx.send(f"**{commandSetting[33][0]} [금액] [아이디1] [아이디2] ... /[사유]** 양식으로 입력 해주세요.")
 
 		input_guild_support_money_ID_data : list = input_guild_support_money_data[0].split(" ")
+
+		input_guild_support_money_ID_data = list(set(input_guild_support_money_ID_data))
 
 		try:
 			input_guild_support_money_ID_data[0] = int(input_guild_support_money_ID_data[0])
