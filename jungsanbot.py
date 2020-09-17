@@ -243,6 +243,7 @@ class IlsangDistributionBot(commands.AutoShardedBot):
 				total_save_money += int(jungsan_data['each_price']*len(jungsan_data['before_jungsan_ID'])*(1-(basicSetting[7]/100)))
 				delete_jungsan_id.append(jungsan_data['_id'])
 				del jungsan_data['_id']
+				jungsan_data["getdate"] = datetime.datetime.now()
 				backup_jungsan_document.append(jungsan_data)
 
 			self.db.jungsan.guild_log.delete_many({'log_date':{"$lt":log_delete_date}})
@@ -3683,7 +3684,7 @@ class bankCog(commands.Cog):
 
 		input_guild_support_money_ID_data : list = input_guild_support_money_data[0].split(" ")
 
-		input_guild_support_money_ID_data = list(set(input_guild_support_money_ID_data))
+		input_guild_support_money_ID_data = [input_guild_support_money_ID_data[0]] + list(set(input_guild_support_money_ID_data[1:]))
 
 		try:
 			input_guild_support_money_ID_data[0] = int(input_guild_support_money_ID_data[0])
@@ -3722,7 +3723,7 @@ class bankCog(commands.Cog):
 
 		result_guild_update = self.guild_db.update_one({"_id":"guild"}, {"$inc":{"guild_money":-total_support_money}}, upsert = False)
 		if result_guild_update.raw_result["nModified"] < 1 and "upserted" not in result_guild_update.raw_result:
-			return await ctx.send(f"```혈비 출금 실패!```")
+			return await ctx.send(f"```혈비 지원 실패!```")
 
 		embed = discord.Embed(
 				title = f"🤑 혈비 지원 완료",
@@ -3730,7 +3731,8 @@ class bankCog(commands.Cog):
 				color=0x00ff00
 				)
 		embed.add_field(name = f"**👥  명단**", value = f"**```fix\n{', '.join(input_guild_support_money_ID_data[1:])}```**")
-		embed.add_field(name = f"**💰  지원금**", value = f"**```fix\n{input_guild_support_money_ID_data[0]}```**")
+		embed.add_field(name = f"**💰  인당지원금**", value = f"**```fix\n{input_guild_support_money_ID_data[0]}```**")
+		embed.add_field(name = f"**💰  토탈지원금**", value = f"**```fix\n{int(input_guild_support_money_ID_data[0])*len(input_guild_support_money_ID_data[1:])}```**")
 		return await ctx.send(embed = embed)
 
 	################ 창고검색 #################
