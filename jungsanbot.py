@@ -228,7 +228,7 @@ class IlsangDistributionBot(commands.AutoShardedBot):
 		await self.wait_until_ready()
 		if basicSetting[6] != "" and basicSetting[6] != 0 :
 			backup_date = datetime.datetime.now() - datetime.timedelta(days = int(basicSetting[4])) + datetime.timedelta(hours = int(basicSetting[8]))
-			log_delete_date = datetime.datetime.now() - datetime.timedelta(days = int(30))
+			log_delete_date = datetime.datetime.now() - datetime.timedelta(days = int(15))
 			
 			jungsan_document :list = []
 			delete_jungsan_id : list = []
