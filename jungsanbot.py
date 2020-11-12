@@ -228,7 +228,7 @@ class IlsangDistributionBot(commands.AutoShardedBot):
 		await self.wait_until_ready()
 		if basicSetting[6] != "" and basicSetting[6] != 0 :
 			backup_date = datetime.datetime.now() - datetime.timedelta(days = int(basicSetting[4])) + datetime.timedelta(hours = int(basicSetting[8]))
-			log_delete_date = datetime.datetime.now() - datetime.timedelta(days = int(15))
+			log_delete_date = datetime.datetime.now() - datetime.timedelta(days = int(7))
 			
 			jungsan_document :list = []
 			delete_jungsan_id : list = []
@@ -538,7 +538,7 @@ class adminCog(commands.Cog):
 			manager_command_list += f"{','.join(commandSetting[40])}\n"   # 삭제주기설정
 			manager_command_list += f"{','.join(commandSetting[41])}\n"   # 확인시간설정
 			manager_command_list += f"{','.join(commandSetting[42])}\n"   # 세금설정
-			manager_command_list += f"{','.join(commandSetting[47])}  ※ 30일 이후 데이터는 삭제됨\n"   # 혈비로그확인
+			manager_command_list += f"{','.join(commandSetting[47])}  ※ 7일 이후 데이터는 삭제됨\n"   # 혈비로그확인
 			manager_command_list += f"{','.join(commandSetting[43])} (상세)\n"   # 전체확인
 			manager_command_list += f"{','.join(commandSetting[43])} (상세) (검색조건) (검색값)\n"   # 전체확인
 			manager_command_list += f"{','.join(commandSetting[9])} [아이디] [디스코드ID]\n"   # 혈원입력
@@ -598,7 +598,7 @@ class adminCog(commands.Cog):
 			embed.add_field(name = f"🤴 [ 총무 전용 명령어 ]", value = f"```css\n{manager_command_list}```", inline = False)
 			embed.add_field(name = f"🧑 [ 일반 명령어 ]", value = f"```css\n{member_command_list}```", inline = False)
 			embed.add_field(name = f"🔧 [ 기타 명령어 ]", value = f"```css\n{etc_command_list}```", inline = False)
-			embed.set_footer(text = f"※ [분배완료]된 것 중 30일이 지난 건은 자동으로 삭제\n※ [미입력] 상태의 등록건만 수정 가능\n※ [분배중] 상태의 등록건만 정산 가능\n※ [거래소세금] : 미입력시 {basicSetting[7]}%")
+			embed.set_footer(text = f"※ [분배완료]된 것 중 7일이 지난 건은 자동으로 삭제\n※ [미입력] 상태의 등록건만 수정 가능\n※ [분배중] 상태의 등록건만 정산 가능\n※ [거래소세금] : 미입력시 {basicSetting[7]}%")
 			return await ctx.send( embed=embed, tts=False)
 
 	################ member_db초기화 ################ .
