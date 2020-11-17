@@ -1411,7 +1411,7 @@ class manageCog(commands.Cog):
 
 	################ 분배뽑기등록 ################ 
 	@commands.command(name=commandSetting[52][0], aliases=commandSetting[52][1:])
-	async def regist_data(self, ctx, *, args : str = None):
+	async def ladder_regist_data(self, ctx, *, args : str = None):
 		if ctx.message.channel.id != int(basicSetting[6]) or basicSetting[6] == "":
 			return
 
