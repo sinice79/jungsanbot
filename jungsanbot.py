@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*- 
 
-##################################### 서버용 V9 ##########################################
+##################################### 서버용 V10 ##########################################
 #########################################################################################
 #########################################################################################
 #########################################################################################
@@ -171,8 +171,10 @@ class IlsangDistributionBot(commands.AutoShardedBot):
 			"username" : basicSetting[2],
 			"password" : basicSetting[3]
 			}
+			
+		INTENTS = discord.Intents.all()
 
-		super().__init__(command_prefix=[""], help_command=None)
+		super().__init__(command_prefix=[""], help_command=None, intents=INTENTS)
 		self.session = aiohttp.ClientSession(loop=self.loop)
 
 		# db 설정
@@ -548,6 +550,7 @@ class adminCog(commands.Cog):
 			manager_command_list += f"{','.join(commandSetting[32])} [금액] /[사유]\n"   # 혈비입금
 			manager_command_list += f"{','.join(commandSetting[49])} [금액] /[사유]\n"   # 혈비출금
 			manager_command_list += f"{','.join(commandSetting[33])} [금액] [아이디1] [아이디2]... /[사유]\n"   # 혈비지원
+			manager_command_list += f"{','.join(commandSetting[53])} [순번] [변경아이디]\n"   # 등록자수정
 
 			member_command_list : str = ""
 			member_command_list += f"{','.join(commandSetting[6])}\n"   # 혈원
@@ -1097,35 +1100,80 @@ class memberCog(commands.Cog):
 		if not args:
 			return await ctx.send(f"**{commandSetting[10][0]} [아이디]** 양식으로 삭제 해주세요.")
 
-		jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or": [{"before_jungsan_ID" : args}, {"toggle": args}]}, {"$or": [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}))
+		jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or": [{"before_jungsan_ID" : args}, {"toggle" : args}, {"regist" : args}]}, {"$or": [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}))
 		len_jungsan_document : int = len(jungsan_document)
 		
 		if len_jungsan_document != 0:
 			remain_jungsan_info : str = ""
+			plus_remain_money : int = 0
+			minus_remain_money : int = 0
 			total_remain_money : int = 0
 			for jungsan_data in jungsan_document:
-				if jungsan_data["toggle"] == args:
-					if jungsan_data['each_price'] != 0 and args in jungsan_data['before_jungsan_ID']:
-						total_remain_money += jungsan_data['each_price']
-						remain_jungsan_info += f"**[ 순번 : {jungsan_data['_id']}]** 루팅  💰 {jungsan_data['each_price']}\n"
+				if jungsan_data["regist"] == args:
+					if jungsan_data['price'] != 0 and args in jungsan_data['before_jungsan_ID']:
+						minus_remain_money += jungsan_data['price']
+						remain_jungsan_info += f"[순번:{jungsan_data['_id']}]({jungsan_data['itemstatus']}) 등록 -{jungsan_data['price']}"
+						if jungsan_data['each_price'] != 0:
+							plus_remain_money += jungsan_data['each_price']
+							remain_jungsan_info += f" 참여 +{jungsan_data['each_price']}\n"
+						else:
+							remain_jungsan_info += f"\n"
 					else:
-						remain_jungsan_info += f"**[ 순번 : {jungsan_data['_id']}]** 루팅\n"
+						remain_jungsan_info += f"[순번:{jungsan_data['_id']}]({jungsan_data['itemstatus']}) 등록\n"
+				elif jungsan_data["toggle"] == args:
+					if jungsan_data['price'] != 0 and args in jungsan_data['before_jungsan_ID']:
+						minus_remain_money += jungsan_data['price']
+						remain_jungsan_info += f"[순번:{jungsan_data['_id']}]({jungsan_data['itemstatus']}) 루팅 -{jungsan_data['price']}"
+						if jungsan_data['each_price'] != 0:
+							plus_remain_money += jungsan_data['each_price']
+							remain_jungsan_info += f" 참여 +{jungsan_data['each_price']}\n"
+						else:
+							remain_jungsan_info += f"\n"
+					else:
+						remain_jungsan_info += f"[순번:{jungsan_data['_id']}]({jungsan_data['itemstatus']}) 루팅\n"
 				else: 
 					if jungsan_data['each_price'] != 0:
-						total_remain_money += jungsan_data['each_price']
-						remain_jungsan_info += f"**[ 순번 : {jungsan_data['_id']}]** 참여 💰 {jungsan_data['each_price']}\n"
+						plus_remain_money += jungsan_data['each_price']
+						remain_jungsan_info += f"[순번:{jungsan_data['_id']}]({jungsan_data['itemstatus']}) 참여 +{jungsan_data['each_price']}\n"
 					else:
-						remain_jungsan_info += f"**[ 순번 : {jungsan_data['_id']}]** 참여\n"
+						remain_jungsan_info += f"[순번:{jungsan_data['_id']}]({jungsan_data['itemstatus']}) 참여\n"
 						
+			total_remain_money = plus_remain_money - minus_remain_money
 
-			await ctx.send(f"```잔여 루팅/정산 목록이 있어 혈원을 삭제할 수 없습니다.```")
+			await ctx.send(f"```잔여 등록/루팅/정산 목록이 있어 혈원을 삭제할 수 없습니다.```")
 			embed = discord.Embed(
-				title = "📜 잔여 루팅/정산 목록",
-				description = remain_jungsan_info,
+				title = "📜 잔여 등록/루팅/정산 목록",
+				description = f"```md\n{remain_jungsan_info}```",
 				color=0x00ff00
 				)
-			embed.add_field(name = "\u200b", value = f"잔여 정산 금액 : 💰 {total_remain_money}")
-			return await ctx.send(embed = embed)
+			embed.add_field(name = "\u200b", value = f"잔여 정산 금액 : 💰 **{total_remain_money}**")
+			embed.add_field(name = "\u200b", value = f"잔여 목록을 `일괄정산`하고 혈원[`{args}`]을(를) `삭제` 하고 싶으면 `{int(basicSetting[5])*2}초`내로 ✅를 `클릭`해 주세요!", inline = False)
+			embed.set_footer(text = f"일괄정산 처리를 원하지 않는 경우 등록내역 수정 등을 통해 혈원[{args}]에 대한 정보를 삭제 후 다시 삭제요청 바랍니다.")
+			remain_jungsan_info_msg = await ctx.send(embed = embed)
+
+			emoji_list : list = ["✅", "❌"]
+
+			for emoji in emoji_list:
+				await remain_jungsan_info_msg.add_reaction(emoji)
+
+			def reaction_check(reaction, user):
+				return (reaction.message.id == remain_jungsan_info_msg.id) and (user.id == ctx.author.id) and (str(reaction) in emoji_list)
+
+			try:
+				reaction, user = await self.bot.wait_for('reaction_add', check = reaction_check, timeout = int(basicSetting[5])*2)
+			except asyncio.TimeoutError:
+				for emoji in emoji_list:
+					await remain_jungsan_info_msg.remove_reaction(emoji, self.bot.user)
+				return await ctx.send(f"시간이 초과됐습니다. **혈원삭제**를 취소합니다!")
+
+			if str(reaction) == "✅":
+				for jungsan_data in jungsan_document:
+					result = self.jungsan_db.update_one({"_id":jungsan_data['_id']}, {"$set":{"before_jungsan_ID":[], "after_jungsan_ID":jungsan_data['after_jungsan_ID']+jungsan_data['before_jungsan_ID'], "modifydate":datetime.datetime.now(), "itemstatus":"분배완료"}}, upsert = True)
+					if result.raw_result["nModified"] < 1 and "upserted" not in result.raw_result:
+						await ctx.send(f"{ctx.author.mention}, 일괄정산 실패.") 
+				await ctx.send(f"📥 일괄정산 완료! 📥")
+			else:
+				return await ctx.send(f"**혈원삭제**를 취소하였습니다!")
 
 		result = self.member_db.delete_one({"game_ID":args})
 		
@@ -1879,11 +1927,9 @@ class manageCog(commands.Cog):
 
 		if len_input_regist_data < 5:
 			return await ctx.send(f"**{commandSetting[14][0]} [순번] [보스명] [아이템명] [루팅자] [참여자1] [참여자2]...** 양식으로 등록 해주세요.")
-
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id":ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
-			jungsan_data : dict = self.jungsan_db.find_one({"_id":int(input_regist_data[0]), "itemstatus": "미판매"})
+		
+		if "manager" in member_data['permissions']:
+			jungsan_data : dict = self.jungsan_db.find_one({"_id":int(input_regist_data[0]), "itemstatus":"미판매"})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"_id":int(input_regist_data[0]), "regist_ID":str(member_data['_id']), "itemstatus":"미판매"})
 		
@@ -1998,9 +2044,7 @@ class manageCog(commands.Cog):
 		if not args:
 			return await ctx.send(f"**{commandSetting[15][0]} [순번]** 양식으로 확인 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(args)}, {"$or" : [{"itemstatus" : "분배완료"}, {"itemstatus" : "미판매"}]}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"regist_ID":str(ctx.author.id)}, {"_id":int(args)}, {"$or" : [{"itemstatus" : "분배완료"}, {"itemstatus" : "미판매"}]}]})
@@ -2217,14 +2261,9 @@ class manageCog(commands.Cog):
 
 		if len_input_regist_data < 5:
 			return await ctx.send(f"**{commandSetting[17][0]} [순번] [보스명] [아이템명] [루팅자] [참여자1] [참여자2]...** 양식으로 등록 해주세요.")
-
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
-			jungsan_data : dict = self.jungsan_db.find_one({"_id":int(input_regist_data[0]), "itemstatus":"미판매"})
-		else:
-			jungsan_data : dict = self.jungsan_db.find_one({"_id":int(input_regist_data[0]), "toggle_ID":str(member_data['_id']), "itemstatus":"미판매"})
-
+		
+		jungsan_data : dict = self.jungsan_db.find_one({"_id":int(input_regist_data[0]), "toggle_ID":str(member_data['_id']), "itemstatus":"미판매"})
+		
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 루팅하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 루팅건만 수정 가능합니다!")
 
@@ -2336,12 +2375,7 @@ class manageCog(commands.Cog):
 		if not args:
 			return await ctx.send(f"**{commandSetting[18][0]} [순번]** 양식으로 확인 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
-			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(args)}, {"$or" : [{"itemstatus" : "분배완료"}, {"itemstatus" : "미판매"}]}]})
-		else:
-			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"toggle_ID":str(ctx.author.id)}, {"_id":int(args)}, {"$or" : [{"itemstatus" : "분배완료"}, {"itemstatus" : "미판매"}]}]})
+		jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"toggle_ID":str(ctx.author.id)}, {"_id":int(args)}, {"$or" : [{"itemstatus" : "분배완료"}, {"itemstatus" : "미판매"}]}]})
 
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 분배중 ]**이거나 없습니다. **[ {commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 삭제는 **[ 분배상태 ]**가 **[ 미판매/분배완료 ]** 인 등록건만 수정 가능합니다!")
@@ -2403,13 +2437,11 @@ class manageCog(commands.Cog):
 		if len_input_regist_data != 2:
 			return await ctx.send(f"**{commandSetting[19][0]} [순번] [보스명]** 양식으로 등록 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
-
+		
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[13][0]}/{commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 등록건만 수정 가능합니다!")
 
@@ -2483,13 +2515,11 @@ class manageCog(commands.Cog):
 		if len_input_regist_data != 2:
 			return await ctx.send(f"**{commandSetting[20][0]} [순번] [아이템명]** 양식으로 등록 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
-
+		
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[13][0]}/{commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 등록건만 수정 가능합니다!")
 
@@ -2543,7 +2573,97 @@ class manageCog(commands.Cog):
 		else:
 			return await ctx.send(f"**수정**이 취소되었습니다.\n")
 
-	################ 루팅자 수정 ################ 
+	################ 등록자수정 ################ 
+	@is_manager() 
+	@commands.command(name=commandSetting[53][0], aliases=commandSetting[53][1:])
+	async def modify_regist_user_data(self, ctx, *, args : str = None):
+		if ctx.message.channel.id != int(basicSetting[6]) or basicSetting[6] == "":
+			return
+
+		member_data : dict = self.member_db.find_one({"_id":ctx.author.id})
+
+		if not member_data:
+			return await ctx.send(f"{ctx.author.mention}님은 혈원으로 등록되어 있지 않습니다!")
+
+		if not args:
+			return await ctx.send(f"**{commandSetting[53][0]} [순번] [아이디]** 양식으로 등록 해주세요.")
+		
+		input_regist_data : list = args.split()
+		len_input_regist_data = len(input_regist_data)
+
+		if len_input_regist_data != 2:
+			return await ctx.send(f"**{commandSetting[53][0]} [순번] [아이디]** 양식으로 등록 해주세요.")
+
+		jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
+	
+		if not jungsan_data:
+			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[13][0]}/{commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 등록건만 수정 가능합니다!")
+
+		if jungsan_data['regist'] == input_regist_data[1]:
+			return await ctx.send(f"```수정하려는 [등록자:{input_regist_data[1]}](이)가 등록된 [등록자]와 같습니다!```")
+
+		check_member_data : list = []
+		regist_member_data : dict = {}
+
+		regist_member_data = self.member_db.find_one({"game_ID":input_regist_data[1]})
+		if not regist_member_data:
+			return await ctx.send(f"```등록자 [{input_regist_data[1]}](은)는 혈원으로 등록되지 않은 아이디 입니다.```")
+
+		check_member_data = list(self.member_db.find())
+		for game_id in check_member_data:
+			if game_id['game_ID'] == input_regist_data[1]:
+				regist_member_data["_id"] = game_id['_id']
+		
+		input_time : datetime = datetime.datetime.now()
+		insert_data : dict = {}
+		insert_data = jungsan_data.copy()
+		insert_data["regist"] = input_regist_data[1]
+		insert_data["regist_ID"] = str(regist_member_data["_id"])
+		insert_data["modifydate"] = input_time
+
+		embed = discord.Embed(
+				title = "📜 수정 정보",
+				description = "",
+				color=0x00ff00
+				)
+		embed.add_field(name = "[ 순번 ]", value = f"```{jungsan_data['_id']}```", inline = False)
+		embed.add_field(name = "[ 등록 ]", value = f"```{jungsan_data['regist']} → {insert_data['regist']}```")
+		embed.add_field(name = "[ 날짜 ]", value = f"```{jungsan_data['getdate'].strftime('%y-%m-%d %H:%M:%S')}```", inline = False)
+		embed.add_field(name = "[ 보스 ]", value = f"```{jungsan_data['boss']}```")
+		embed.add_field(name = "[ 아이템 ]", value = f"```{jungsan_data['item']}```")
+		embed.add_field(name = "[ 루팅자 ]", value = f"```{jungsan_data['toggle']}```")
+		embed.add_field(name = "[ 상태 ]", value = f"```{jungsan_data['itemstatus']}```")
+		embed.add_field(name = "[ 판매금 ]", value = f"```{jungsan_data['price']}```")
+		embed.add_field(name = "[ 참여자 ]", value = f"```{', '.join(jungsan_data['before_jungsan_ID'])}```")
+		embed.set_footer(text = f"{insert_data['modifydate'].strftime('%y-%m-%d %H:%M:%S')} 수정!")
+		await ctx.send(embed = embed)
+
+		data_regist_warning_message = await ctx.send(f"**입력하신 수정 내역을 확인해 보세요!**\n**수정 : ⭕ 취소: ❌**\n({basicSetting[5]}초 동안 입력이 없을시 수정이 취소됩니다.)", tts=False)
+
+		emoji_list : list = ["⭕", "❌"]
+		for emoji in emoji_list:
+			await data_regist_warning_message.add_reaction(emoji)
+
+		def reaction_check(reaction, user):
+			return (reaction.message.id == data_regist_warning_message.id) and (user.id == ctx.author.id) and (str(reaction) in emoji_list)
+
+		try:
+			reaction, user = await self.bot.wait_for('reaction_add', check = reaction_check, timeout = int(basicSetting[5]))
+		except asyncio.TimeoutError:
+			for emoji in emoji_list:
+				await data_regist_warning_message.remove_reaction(emoji, self.bot.user)
+			return await ctx.send(f"시간이 초과됐습니다. **수정**을 취소합니다!")
+
+		if str(reaction) == "⭕":
+			result = self.jungsan_db.update_one({"_id":jungsan_data['_id']}, {"$set":insert_data}, upsert = False)
+			if result.raw_result["nModified"] < 1 and "upserted" not in result.raw_result:
+				return await ctx.send(f"{ctx.author.mention}, 정산 등록 내역 수정 실패!") 
+
+			return await ctx.send(f"📥 정산 등록 내역 수정 완료! 📥")
+		else:
+			return await ctx.send(f"**수정**이 취소되었습니다.\n")
+
+	################ 루팅자수정 ################ 
 	@commands.command(name=commandSetting[21][0], aliases=commandSetting[21][1:])
 	async def modify_regist_toggle_data(self, ctx, *, args : str = None):
 		if ctx.message.channel.id != int(basicSetting[6]) or basicSetting[6] == "":
@@ -2562,14 +2682,12 @@ class manageCog(commands.Cog):
 
 		if len_input_regist_data != 2:
 			return await ctx.send(f"**{commandSetting[21][0]} [순번] [아이디]** 양식으로 등록 해주세요.")
-
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
-
+		
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[13][0]}/{commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 등록건만 수정 가능합니다!")
 
@@ -2662,14 +2780,12 @@ class manageCog(commands.Cog):
 
 		if len_input_regist_data != 2:
 			return await ctx.send(f"**{commandSetting[22][0]} [순번] [아이디]** 양식으로 등록 해주세요.")
-
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
-
+		
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[13][0]}/{commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 등록건만 수정 가능합니다!")
 
@@ -2752,14 +2868,12 @@ class manageCog(commands.Cog):
 
 		if len_input_regist_data != 2:
 			return await ctx.send(f"**{commandSetting[23][0]} [순번] [아이디]** 양식으로 등록 해주세요.")
-
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
-
+		
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[13][0]}/{commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 등록건만 수정 가능합니다!")
 
@@ -2845,14 +2959,12 @@ class manageCog(commands.Cog):
 
 		if len_input_regist_data != 2:
 			return await ctx.send(f"**{commandSetting[50][0]} [순번] [수정이미지 url]** 양식으로 등록 해주세요.")
-
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
-
+		
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[13][0]}/{commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 등록건만 수정 가능합니다!")
 
@@ -2936,9 +3048,7 @@ class manageCog(commands.Cog):
 		except ValueError:
 			return await ctx.send(f"**[순번]** 및 **[금액]**은 숫자로 입력 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_sell_price_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_sell_price_data[0])}, {"itemstatus":"미판매"}]})
@@ -3000,9 +3110,7 @@ class manageCog(commands.Cog):
 		except ValueError:
 			return await ctx.send(f"**[순번]**, **[금액]** 및 **[뽑을인원]**은 숫자로 입력 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_sell_price_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_sell_price_data[0])}, {"itemstatus":"미판매"}]})
@@ -3078,9 +3186,7 @@ class manageCog(commands.Cog):
 		except ValueError:
 			return await ctx.send(f"**[순번]**은 숫자로 입력 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_distribute_finish_data[0])}, {"itemstatus":"분배중"}, {"after_jungsan_ID":[]}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_distribute_finish_data[0])}, {"itemstatus":"분배중"}, {"after_jungsan_ID":[]}]})
@@ -3156,9 +3262,7 @@ class manageCog(commands.Cog):
 		except ValueError:
 			return await ctx.send(f"**[순번]**은 숫자로 입력 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_distribute_finish_data[0])}, {"itemstatus":"분배중"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_distribute_finish_data[0])}, {"itemstatus":"분배중"}]})
@@ -3215,9 +3319,7 @@ class manageCog(commands.Cog):
 		except ValueError:
 			return await ctx.send(f"**[순번]**은 숫자로 입력 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_distribute_finish_data[0])}, {"itemstatus":"분배중"}]})
 		else:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_distribute_finish_data[0])}, {"itemstatus":"분배중"}]})
@@ -3509,12 +3611,11 @@ class bankCog(commands.Cog):
 		except ValueError:
 			return await ctx.send(f"**[순번]** 및 **[금액]**은 숫자로 입력 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_document : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_sell_price_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_document : dict = self.jungsan_db.find_one({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_sell_price_data[0])}, {"itemstatus":"미판매"}]})
+
 		if not jungsan_document:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]** 중이 아니거나 없습니다. **[ {commandSetting[13]}/{commandSetting[16]} ]** 명령을 통해 확인해주세요.")
 		
@@ -3569,12 +3670,11 @@ class bankCog(commands.Cog):
 		except ValueError:
 			return await ctx.send(f"**[순번]**, **[금액]** 및 **[뽑을인원]**은 숫자로 입력 해주세요.")
 
-		user_info : dict = ctx.bot.db.jungsan.member.find_one({"_id": ctx.author.id})
-
-		if "manager" in user_info["permissions"]:
+		if "manager" in member_data['permissions']:
 			jungsan_document : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_sell_price_data[0])}, {"itemstatus":"미판매"}]})
 		else:
 			jungsan_document : dict = self.jungsan_db.find_one({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":int(input_sell_price_data[0])}, {"itemstatus":"미판매"}]})
+
 		if not jungsan_document:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]** 중이 아니거나 없습니다. **[ {commandSetting[13]}/{commandSetting[16]} ]** 명령을 통해 확인해주세요.")
 		
