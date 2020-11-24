@@ -2195,7 +2195,7 @@ class manageCog(commands.Cog):
 					detail_info = f"~~```fix\n[ 혈비적립 ]```~~"
 			elif jungsan_data['bank_money_insert']:
 				detail_title_info = f"[ 순번 : {jungsan_data['_id']} ] | {jungsan_data['getdate'].strftime('%y-%m-%d')} | {jungsan_data['boss']} | {jungsan_data['item']} | {jungsan_data['toggle']} | 은행저축"
-				detail_info = f"```fix\n[ 은행저축 ]```~~"
+				detail_info = f"~~```fix\n[ 은행저축 ]```~~"
 			else:			
 				if jungsan_data['itemstatus'] == "분배중":
 					detail_title_info = f"[ 순번 : {jungsan_data['_id']} ] | {jungsan_data['getdate'].strftime('%y-%m-%d')} | {jungsan_data['boss']} | {jungsan_data['item']} | {jungsan_data['toggle']} | {jungsan_data['itemstatus']} : 1인당 💰{jungsan_data['each_price']}"
