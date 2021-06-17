@@ -6,3 +6,4 @@ pyssml
 oauth2client
 PyOpenSSL
 pymongo
+discord_components
