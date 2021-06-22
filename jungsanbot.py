@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*- 
 
-##################################### 서버용 V14 ##########################################
+##################################### 서버용 V15 ##########################################
 #########################################################################################
 #########################################################################################
 #########################################################################################
@@ -604,6 +604,7 @@ class adminCog(commands.Cog):
 			member_command_list += f"{','.join(commandSetting[11])}\n\n"   # 정산확인
 			
 			member_command_list += f"{','.join(commandSetting[12])} [보스] [아이템] [루팅자] [아이디1] [아이디2] ... (참고이미지 url)\n"   # 등록
+			member_command_list += f"{','.join(commandSetting[12])} [보스] [아이템1] [아이템2] [아이템3] /[루팅자] [아이디1] [아이디2] ... (참고이미지 url)\n※ 루팅자 앞에 [ / ]을 넣어서 아이템 여러개 동시 등록 가능\n"   # 멀티등록
 			member_command_list += f"{','.join(commandSetting[52])} [보스] [아이템] [루팅자] [뽑을인원] [아이디1] [아이디2] ... (참고이미지 url)\n\n"   # 뽑기등록
 			member_command_list += f"----- 등록자만 가능 -----\n"   # 등록자
 			member_command_list += f"{','.join(commandSetting[13])} (상세)\n"   # 등록확인1
@@ -1062,7 +1063,7 @@ class memberCog(commands.Cog):
 		if member_game_ID_document:
 			return await ctx.send(f"```이미 등록된 [ 아이디 ] 입니다!```")
 
-		jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or" : [{"before_jungsan_ID" : member_data['game_ID']}, {"after_jungsan_ID" : member_data['game_ID']}, {"toggle" : member_data['game_ID']}, {"regist" : member_data['game_ID']}]}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}))
+		jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or" : [{"before_jungsan_ID" : member_data['game_ID']}, {"after_jungsan_ID" : member_data['game_ID']}, {"toggle" : member_data['game_ID']}, {"regist" : member_data['game_ID']}]}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}).sort("_id", pymongo.ASCENDING))
 		len_jungsan_document : int = len(jungsan_document)
 		tmp_before_data : list = []
 		tmp_after_data : list = []
@@ -1189,7 +1190,7 @@ class memberCog(commands.Cog):
 		if member_game_ID_document:
 			return await ctx.send(f"```이미 등록된 [ 아이디 ] 입니다!```")
 
-		jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or" : [{"before_jungsan_ID" : member_data['game_ID']}, {"after_jungsan_ID" : member_data['game_ID']}, {"toggle" : member_data['game_ID']}, {"regist" : member_data['game_ID']}]}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}))
+		jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or" : [{"before_jungsan_ID" : member_data['game_ID']}, {"after_jungsan_ID" : member_data['game_ID']}, {"toggle" : member_data['game_ID']}, {"regist" : member_data['game_ID']}]}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}).sort("_id", pymongo.ASCENDING))
 		len_jungsan_document : int = len(jungsan_document)
 		tmp_before_data : list = []
 		tmp_after_data : list = []
@@ -1242,7 +1243,7 @@ class memberCog(commands.Cog):
 		if not args:
 			return await ctx.send(f"**{commandSetting[10][0]} [아이디]** 양식으로 삭제 해주세요.")
 
-		jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or": [{"before_jungsan_ID" : args}, {"toggle" : args}, {"regist" : args}]}, {"$or": [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}))
+		jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or": [{"before_jungsan_ID" : args}, {"toggle" : args}, {"regist" : args}]}, {"$or": [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}).sort("_id", pymongo.ASCENDING))
 		len_jungsan_document : int = len(jungsan_document)
 		
 		if len_jungsan_document != 0:
@@ -1339,7 +1340,7 @@ class manageCog(commands.Cog):
 
 		jungsan_document : list = []
 		if not args:
-			jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}))
+			jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}).sort("_id", pymongo.ASCENDING))
 		else:
 			input_distribute_all_finish : list = args.split()
 			len_input_distribute_all_finish = len(input_distribute_all_finish)
@@ -1366,21 +1367,21 @@ class manageCog(commands.Cog):
 							return await ctx.send(f"{ctx.author.mention}, 정산 등록 실패!") 
 						return await ctx.send(embed = embed)
 				elif input_distribute_all_finish[0] == "보스":
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"boss":input_distribute_all_finish[1]}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"boss":input_distribute_all_finish[1]}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "아이템":
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"item":input_distribute_all_finish[1]}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"item":input_distribute_all_finish[1]}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "날짜":
 					try:
 						start_search_date : str = (datetime.datetime.now() + datetime.timedelta(hours = int(basicSetting[9]))).replace(year = int(input_distribute_all_finish[1][:4]), month = int(input_distribute_all_finish[1][5:7]), day = int(input_distribute_all_finish[1][8:10]), hour = 0, minute = 0, second = 0)
 						end_search_date : str = start_search_date + datetime.timedelta(days = 1)
 					except:
 						return await ctx.send(f"**[날짜] [검색값]**은 0000-00-00 형식으로 입력 해주세요!")
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"getdate":{"$gte":start_search_date, "$lt":end_search_date}}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"getdate":{"$gte":start_search_date, "$lt":end_search_date}}, {"$or" : [{"itemstatus" : "분배중"}, {"itemstatus" : "미판매"}]}]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "분배상태":
 					if input_distribute_all_finish[1] == "분배중":
-						jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"itemstatus" : "분배중"}]}))
+						jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"itemstatus" : "분배중"}]}).sort("_id", pymongo.ASCENDING))
 					elif input_distribute_all_finish[1] == "미판매":
-						jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"itemstatus" : "미판매"}]}))
+						jungsan_document = list(self.jungsan_db.find({"$and" : [{"before_jungsan_ID" : member_data['game_ID']}, {"itemstatus" : "미판매"}]}).sort("_id", pymongo.ASCENDING))
 					else:
 						return await ctx.send(f"**[분배상태] [검색값]**은 \"미판매\" 혹은 \"분배중\"로 입력 해주세요!")
 				else:
@@ -1463,90 +1464,118 @@ class manageCog(commands.Cog):
 			return await ctx.send(f"{ctx.author.mention}님은 혈원으로 등록되어 있지 않습니다!")
 
 		if not args:
-			return await ctx.send(f"**{commandSetting[12][0]} [보스명] [아이템명] [루팅자] [참여자1] [참여자2]...** 양식으로 등록 해주세요.")
-
+			return await ctx.send(f"**{commandSetting[12][0]} [보스명] [아이템명] [루팅자] [참여자1] [참여자2]...**\n**{commandSetting[12][0]} [보스명] [아이템명1] [아이템명2].. /[루팅자] [참여자1] [참여자2]...**\n양식으로 등록 해주세요.")
+		
+		input_data : list = []
+		input_data_list : list = []
 		tmp_args : str = ""
 		tmp_image_url : str = ""
+		boss_data : list = []
+		join_member_data : list = []
+		loot_member_data : list = []
+		items_list : list = []
+		result_list : list = []
+
+		init_index_value = self.index_value
+		tmp_args = args
 
 		if args.find("https://") != -1:
-			tmp_data = args.split("https://")
-			tmp_args = tmp_data[0]
-			tmp_image_url = f"https://{tmp_data[1]}"
-		else:
-			tmp_args = args
-		
-		input_regist_data : list = tmp_args.split()
-		len_input_regist_data = len(input_regist_data)
+			input_data = args.split("https://")
+			tmp_args = input_data[0]
+			tmp_image_url = f"https://{input_data[1]}"
 
-		if len_input_regist_data < 4:
-			return await ctx.send(f"**{commandSetting[12][0]} [보스명] [아이템명] [루팅자] [참여자1] [참여자2]...** 양식으로 등록 해주세요.")
+		try:
+			if tmp_args.find("/") != -1:
+				input_data = tmp_args.split("/")
+				input_data_list = input_data[0].split()
+				boss_data = [input_data_list[0]]
+				items_list = input_data_list[1:]
+				loot_member_data = [input_data[1].split()[0]]
+				join_member_data = input_data[1].split()[1:]
+			else:
+				input_data = tmp_args.split()
+				boss_data = [input_data[0]]
+				items_list = [input_data[1]]			
+				loot_member_data = [input_data[2]]
+				join_member_data = input_data[3:]
+		except:
+			return await ctx.send(f"**{commandSetting[12][0]} [보스명] [아이템명] [루팅자] [참여자1] [참여자2]...**\n**{commandSetting[12][0]} [보스명] [아이템명1] [아이템명2].. /[루팅자] [참여자1] [참여자2]...**\n양식으로 등록 해주세요.")
+			
+		if len(boss_data) < 1 or len(items_list) < 1 or len(join_member_data) < 1 or len(loot_member_data) < 1:
+			return await ctx.send(f"**{commandSetting[12][0]} [보스명] [아이템명] [루팅자] [참여자1] [참여자2]...** 양식으로 등록 해주세요.\n**{commandSetting[12][0]} [보스명] [아이템명1] [아이템명2].. /[루팅자] [참여자1] [참여자2]...**\n양식으로 등록 해주세요.")
 
 		check_member_data : list = []
 		check_member_list : list = []
 		wrong_input_id : list = []
 		gulid_money_insert_check : bool = False
-		loot_member_data : dict = {}
+		loot_member_info : dict = {}
 
-		if input_regist_data[2] == "혈비":
+		if loot_member_data[0] == "혈비":
 			gulid_money_insert_check = True
-			loot_member_data = {"_id":ctx.author.id}
+			loot_member_info = {"_id":ctx.author.id}
 		else:
 			gulid_money_insert_check = False
-			loot_member_data = self.member_db.find_one({"game_ID":input_regist_data[2]})
-			if not loot_member_data:
-				wrong_input_id.append(f"💥{input_regist_data[2]}")
+			loot_member_info = self.member_db.find_one({"game_ID":loot_member_data[0]})
+			if not loot_member_info:
+				wrong_input_id.append(f"💥{loot_member_data[0]}")
 				#return await ctx.send(f"```루팅자 [{input_regist_data[2]}](은)는 혈원으로 등록되지 않은 아이디 입니다.```")
 
 		check_member_data = list(self.member_db.find())
 		for game_id in check_member_data:
 			check_member_list.append(game_id['game_ID'])
 
-		for game_id in input_regist_data[3:]:
+		for game_id in join_member_data:
 			if game_id not in check_member_list:
 				wrong_input_id.append(game_id)
 
 		if len(wrong_input_id) > 0:
 			return await ctx.send(f"```[{', '.join(wrong_input_id)}](은)는 혈원으로 등록되지 않은 아이디 입니다.```")
-		
-		input_time : datetime = datetime.datetime.now() + datetime.timedelta(hours = int(basicSetting[9]))
-		insert_data : dict = {}
-		insert_data = {"regist_ID":str(ctx.author.id),
-					"regist":member_data["game_ID"],
-					"getdate":input_time,
-					"boss":input_regist_data[0],
-					"item":input_regist_data[1],
-					"toggle":input_regist_data[2],
-					"toggle_ID":str(loot_member_data["_id"]),
-					"itemstatus":"미판매",
-					"price":0,
-					"each_price":0,
-					"before_jungsan_ID":sorted(list(set(input_regist_data[3:]))),
-					"after_jungsan_ID":[],
-					"modifydate":input_time,
-					"gulid_money_insert":gulid_money_insert_check,
-					"bank_money_insert":False,
-					"ladder_check":False,
-					"image_url":tmp_image_url
-					}
-		
-		# "_id" : int = 순번
-		# "regist_ID" : str = 등록자 ID
-		# "regist" : str = 등록자 게임 ID
-		# "getdate" : datetime = 등록날짜
-		# "boss" : str = 보스명
-		# "item" : str = 아이템명
-		# "toggle" : str = 루팅자 게임 ID
-		# "toggle_ID" : str = 루팅자 ID
-		# "itemstatus" : str = 아이템상태(미판매, 분배중, 분배완료)
-		# "price" : int = 가격
-		# "each_price" : int = 분배가격
-		# "before_jungsan_ID" : list = 참석명단(분배전)
-		# "after_jungsan_ID" : list = 참석명단(분배후)
-		# "modifydate" : datetime = 수정날짜
-		# "gulid_money_insert" : bool = 혈비등록여부
-		# "bank_money_insert" : bool = 은행입금여부
-		# "ladder_check":False
-		# "image_url":이미지 url
+
+		for item_data in items_list:
+			self.index_value += 1
+			
+			input_time : datetime = datetime.datetime.now() + datetime.timedelta(hours = int(basicSetting[9]))
+			insert_data : dict = {}
+			insert_data = {"_id":self.index_value,
+						"regist_ID":str(ctx.author.id),
+						"regist":member_data["game_ID"],
+						"getdate":input_time,
+						"boss":boss_data[0],
+						"item":item_data,
+						"toggle":loot_member_data[0],
+						"toggle_ID":str(loot_member_info["_id"]),
+						"itemstatus":"미판매",
+						"price":0,
+						"each_price":0,
+						"before_jungsan_ID":sorted(list(set(join_member_data))),
+						"after_jungsan_ID":[],
+						"modifydate":input_time,
+						"gulid_money_insert":gulid_money_insert_check,
+						"bank_money_insert":False,
+						"ladder_check":False,
+						"image_url":tmp_image_url
+						}
+			
+			# "_id" : int = 순번
+			# "regist_ID" : str = 등록자 ID
+			# "regist" : str = 등록자 게임 ID
+			# "getdate" : datetime = 등록날짜
+			# "boss" : str = 보스명
+			# "item" : str = 아이템명
+			# "toggle" : str = 루팅자 게임 ID
+			# "toggle_ID" : str = 루팅자 ID
+			# "itemstatus" : str = 아이템상태(미판매, 분배중, 분배완료)
+			# "price" : int = 가격
+			# "each_price" : int = 분배가격
+			# "before_jungsan_ID" : list = 참석명단(분배전)
+			# "after_jungsan_ID" : list = 참석명단(분배후)
+			# "modifydate" : datetime = 수정날짜
+			# "gulid_money_insert" : bool = 혈비등록여부
+			# "bank_money_insert" : bool = 은행입금여부
+			# "ladder_check":False
+			# "image_url":이미지 url
+
+			result_list.append(insert_data)
 
 		embed = discord.Embed(
 				title = "📜 등록 정보",
@@ -1555,7 +1584,10 @@ class manageCog(commands.Cog):
 				)
 		embed.add_field(name = "[ 날짜 ]", value = f"```{insert_data['getdate'].strftime('%y-%m-%d %H:%M:%S')}```", inline = False)
 		embed.add_field(name = "[ 보스 ]", value = f"```{insert_data['boss']}```")
-		embed.add_field(name = "[ 아이템 ]", value = f"```{insert_data['item']}```")
+		if len(items_list) < 2:
+			embed.add_field(name = "[ 아이템 ]", value = f"```{insert_data['item']}```")
+		else:
+			embed.add_field(name = "[ 아이템 ]", value = f"```{', '.join(items_list)}```")
 		embed.add_field(name = "[ 루팅자 ]", value = f"```{insert_data['toggle']}```")
 		embed.add_field(name = "[ 참여자 ]", value = f"```{', '.join(insert_data['before_jungsan_ID'])}```")
 		await ctx.send(embed = embed)
@@ -1575,16 +1607,16 @@ class manageCog(commands.Cog):
 		except asyncio.TimeoutError:
 			for emoji in emoji_list:
 				await data_regist_warning_message.remove_reaction(emoji, self.bot.user)
+			self.index_value = init_index_value
 			return await ctx.send(f"시간이 초과됐습니다. **등록**를 취소합니다!")
 
 		if str(reaction) == "⭕":
-			self.index_value += 1
-			result = self.jungsan_db.update_one({"_id":self.index_value}, {"$set":insert_data}, upsert = True)
-			if result.raw_result["nModified"] < 1 and "upserted" not in result.raw_result:
-				return await ctx.send(f"{ctx.author.mention}, 정산 등록 실패!") 
-
-			return await ctx.send(f"📥 **[ 순번 : {self.index_value} ]** 정산 등록 완료! 📥")
+			result = self.jungsan_db.insert_many(result_list)
+			if len(result.inserted_ids) != len(items_list):
+				return await ctx.send(f"{ctx.author.mention}, 정산 뽑기등록 실패!") 
+			return await ctx.send(f"📥 **[ 순번 : {', '.join(map(str, result.inserted_ids))} ]** 정산 등록 완료! 📥")
 		else:
+			self.index_value = init_index_value
 			return await ctx.send(f"**등록**이 취소되었습니다.\n")
 
 	################ 분배뽑기등록 ################ 
@@ -1743,7 +1775,7 @@ class manageCog(commands.Cog):
 
 		jungsan_document : list = []
 		if not args:
-			jungsan_document : list = list(self.jungsan_db.find({}))
+			jungsan_document : list = list(self.jungsan_db.find({}).sort("_id", pymongo.ASCENDING))
 		else:
 			input_distribute_all_finish : list = args.split()
 			
@@ -1754,7 +1786,7 @@ class manageCog(commands.Cog):
 			len_input_distribute_all_finish = len(input_distribute_all_finish)
 
 			if len_input_distribute_all_finish == 0:
-				jungsan_document : list = list(self.jungsan_db.find({}))
+				jungsan_document : list = list(self.jungsan_db.find({}).sort("_id", pymongo.ASCENDING))
 			elif len_input_distribute_all_finish != 2:
 				return await ctx.send(f"**{commandSetting[43][0]} (상세) [검색조건] [검색값]** 형식으로 입력 해주세요! **[검색조건]**은 **[순번, 보스, 아이템, 루팅자, 등록, 날짜, 분배상태]** 일곱가지 중 **1개**를 입력 하셔야합니다!")
 			else:
@@ -1777,25 +1809,25 @@ class manageCog(commands.Cog):
 							return await ctx.send(f"{ctx.author.mention}, 정산 등록 실패!") 
 						return await ctx.send(embed = embed)
 				elif input_distribute_all_finish[0] == "보스":
-					jungsan_document : list = list(self.jungsan_db.find({"boss":input_distribute_all_finish[1]}))
+					jungsan_document : list = list(self.jungsan_db.find({"boss":input_distribute_all_finish[1]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "아이템":
-					jungsan_document : list = list(self.jungsan_db.find({"item":input_distribute_all_finish[1]}))
+					jungsan_document : list = list(self.jungsan_db.find({"item":input_distribute_all_finish[1]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "루팅자":
-					jungsan_document : list = list(self.jungsan_db.find({"toggle":input_distribute_all_finish[1]}))
+					jungsan_document : list = list(self.jungsan_db.find({"toggle":input_distribute_all_finish[1]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "등록":
-					jungsan_document : list = list(self.jungsan_db.find({"regist":input_distribute_all_finish[1]}))
+					jungsan_document : list = list(self.jungsan_db.find({"regist":input_distribute_all_finish[1]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "날짜":
 					try:
 						start_search_date : str = datetime.datetime.now().replace(year = int(input_distribute_all_finish[1][:4]), month = int(input_distribute_all_finish[1][5:7]), day = int(input_distribute_all_finish[1][8:10]), hour = 0, minute = 0, second = 0)
 						end_search_date : str = start_search_date + datetime.timedelta(days = 1)
 					except:
 						return await ctx.send(f"**[날짜] [검색값]**은 0000-00-00 형식으로 입력 해주세요!")
-					jungsan_document : list = list(self.jungsan_db.find({"getdate":{"$gte":start_search_date, "$lt":end_search_date}}))
+					jungsan_document : list = list(self.jungsan_db.find({"getdate":{"$gte":start_search_date, "$lt":end_search_date}}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "분배상태":
 					if input_distribute_all_finish[1] == "분배중":
-						jungsan_document : list = list(self.jungsan_db.find({"itemstatus" : "분배중"}))
+						jungsan_document : list = list(self.jungsan_db.find({"itemstatus" : "분배중"}).sort("_id", pymongo.ASCENDING))
 					elif input_distribute_all_finish[1] == "미판매":
-						jungsan_document : list = list(self.jungsan_db.find({"itemstatus" : "미판매"}))
+						jungsan_document : list = list(self.jungsan_db.find({"itemstatus" : "미판매"}).sort("_id", pymongo.ASCENDING))
 					else:
 						return await ctx.send(f"**[분배상태] [검색값]**은 \"미판매\" 혹은 \"분배중\"로 입력 해주세요!")
 				else:
@@ -1905,7 +1937,7 @@ class manageCog(commands.Cog):
 
 		jungsan_document : list = []
 		if not args:
-			jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id)}))
+			jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id)}).sort("_id", pymongo.ASCENDING))
 		else:
 			input_distribute_all_finish : list = args.split()
 			
@@ -1916,7 +1948,7 @@ class manageCog(commands.Cog):
 			len_input_distribute_all_finish = len(input_distribute_all_finish)
 
 			if len_input_distribute_all_finish == 0:
-				jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id)}))
+				jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id)}).sort("_id", pymongo.ASCENDING))
 			elif len_input_distribute_all_finish != 2:
 				return await ctx.send(f"**{commandSetting[13][0]} (상세) [검색조건] [검색값]** 형식으로 입력 해주세요! **[검색조건]**은 **[순번, 보스, 아이템, 날짜, 분배상태]** 다섯가지 중 **1개**를 입력 하셔야합니다!")
 			else:
@@ -1939,21 +1971,21 @@ class manageCog(commands.Cog):
 							return await ctx.send(f"{ctx.author.mention}, 정산 등록 실패!") 
 						return await ctx.send(embed = embed)
 				elif input_distribute_all_finish[0] == "보스":
-					jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "boss":input_distribute_all_finish[1]}))
+					jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "boss":input_distribute_all_finish[1]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "아이템":
-					jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "item":input_distribute_all_finish[1]}))
+					jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "item":input_distribute_all_finish[1]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "날짜":
 					try:
 						start_search_date : str = (datetime.datetime.now() + datetime.timedelta(hours = int(basicSetting[9]))).replace(year = int(input_distribute_all_finish[1][:4]), month = int(input_distribute_all_finish[1][5:7]), day = int(input_distribute_all_finish[1][8:10]), hour = 0, minute = 0, second = 0)
 						end_search_date : str = start_search_date + datetime.timedelta(days = 1)
 					except:
 						return await ctx.send(f"**[날짜] [검색값]**은 0000-00-00 형식으로 입력 해주세요!")
-					jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "getdate":{"$gte":start_search_date, "$lt":end_search_date}}))
+					jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "getdate":{"$gte":start_search_date, "$lt":end_search_date}}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "분배상태":
 					if input_distribute_all_finish[1] == "분배중":
-						jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "itemstatus" : "분배중"}))
+						jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "itemstatus" : "분배중"}).sort("_id", pymongo.ASCENDING))
 					elif input_distribute_all_finish[1] == "미판매":
-						jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "itemstatus" : "미판매"}))
+						jungsan_document : list = list(self.jungsan_db.find({"regist_ID":str(ctx.author.id), "itemstatus" : "미판매"}).sort("_id", pymongo.ASCENDING))
 					else:
 						return await ctx.send(f"**[분배상태] [검색값]**은 \"미판매\" 혹은 \"분배중\"로 입력 해주세요!")
 				else:
@@ -2244,7 +2276,7 @@ class manageCog(commands.Cog):
 
 		jungsan_document : list = []
 		if not args:
-			jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id)}))
+			jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id)}).sort("_id", pymongo.ASCENDING))
 		else:
 			input_distribute_all_finish : list = args.split()
 			
@@ -2255,7 +2287,7 @@ class manageCog(commands.Cog):
 			len_input_distribute_all_finish = len(input_distribute_all_finish)
 
 			if len_input_distribute_all_finish == 0:
-				jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id)}))
+				jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id)}).sort("_id", pymongo.ASCENDING))
 			elif len_input_distribute_all_finish != 2:
 				return await ctx.send(f"**{commandSetting[16][0]} (상세) [검색조건] [검색값]** 형식으로 입력 해주세요! **[검색조건]**은 **[순번, 보스, 아이템, 날짜, 분배상태]** 다섯가지 중 **1개**를 입력 하셔야합니다!")
 			else:
@@ -2278,9 +2310,9 @@ class manageCog(commands.Cog):
 							return await ctx.send(f"{ctx.author.mention}, 정산 등록 실패!") 
 						return await ctx.send(embed = embed)
 				elif input_distribute_all_finish[0] == "보스":
-					jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id), "boss":input_distribute_all_finish[1]}))
+					jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id), "boss":input_distribute_all_finish[1]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "아이템":
-					jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id), "item":input_distribute_all_finish[1]}))
+					jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id), "item":input_distribute_all_finish[1]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "날짜":
 					try:
 						start_search_date : str = (datetime.datetime.now() + datetime.timedelta(hours = int(basicSetting[9]))).replace(year = int(input_distribute_all_finish[1][:4]), month = int(input_distribute_all_finish[1][5:7]), day = int(input_distribute_all_finish[1][8:10]), hour = 0, minute = 0, second = 0)
@@ -2290,9 +2322,9 @@ class manageCog(commands.Cog):
 					jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id), "getdate":{"$gte":start_search_date, "$lt":end_search_date}}))
 				elif input_distribute_all_finish[0] == "분배상태":
 					if input_distribute_all_finish[1] == "분배중":
-						jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id), "itemstatus" : "분배중"}))
+						jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id), "itemstatus" : "분배중"}).sort("_id", pymongo.ASCENDING))
 					elif input_distribute_all_finish[1] == "미판매":
-						jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id), "itemstatus" : "미판매"}))
+						jungsan_document : list = list(self.jungsan_db.find({"toggle_ID":str(ctx.author.id), "itemstatus" : "미판매"}).sort("_id", pymongo.ASCENDING))
 					else:
 						return await ctx.send(f"**[분배상태] [검색값]**은 \"미판매\" 혹은 \"분배중\"로 입력 해주세요!")
 				else:
@@ -3565,7 +3597,7 @@ class manageCog(commands.Cog):
 		jungsan_document : list = []
 
 		if not args:
-			jungsan_document : list = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"itemstatus":"분배중"}]}))
+			jungsan_document : list = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"itemstatus":"분배중"}]}).sort("_id", pymongo.ASCENDING))
 		else:
 			input_distribute_all_finish : list = args.split()
 			len_input_distribute_all_finish = len(input_distribute_all_finish)
@@ -3578,18 +3610,18 @@ class manageCog(commands.Cog):
 						input_distribute_all_finish[1] = int(input_distribute_all_finish[1])
 					except:
 						return await ctx.send(f"**[순번] [검색값]**은 숫자로 입력 해주세요!")
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":input_distribute_all_finish[1]}, {"itemstatus":"분배중"}]}))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"_id":input_distribute_all_finish[1]}, {"itemstatus":"분배중"}]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "보스":
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"boss":input_distribute_all_finish[1]}, {"itemstatus":"분배중"}]}))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"boss":input_distribute_all_finish[1]}, {"itemstatus":"분배중"}]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "아이템":
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"item":input_distribute_all_finish[1]}, {"itemstatus":"분배중"}]}))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"item":input_distribute_all_finish[1]}, {"itemstatus":"분배중"}]}).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_all_finish[0] == "날짜":
 					try:
 						start_search_date : str = (datetime.datetime.now() + datetime.timedelta(hours = int(basicSetting[9]))).replace(year = int(input_distribute_all_finish[1][:4]), month = int(input_distribute_all_finish[1][5:7]), day = int(input_distribute_all_finish[1][8:10]), hour = 0, minute = 0, second = 0)
 						end_search_date : str = start_search_date + datetime.timedelta(days = 1)
 					except:
 						return await ctx.send(f"**[날짜] [검색값]**은 0000-00-00 형식으로 입력 해주세요!")
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"getdate":{"$gte":start_search_date, "$lt":end_search_date}}, {"itemstatus":"분배중"}]}))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"getdate":{"$gte":start_search_date, "$lt":end_search_date}}, {"itemstatus":"분배중"}]}).sort("_id", pymongo.ASCENDING))
 				else:
 					return await ctx.send(f"**[검색조건]**이 잘못 됐습니다. **[검색조건]**은 **[순번, 보스, 아이템, 날짜]** 네가지 중 **1개**를 입력 하셔야합니다!")
 
@@ -4308,7 +4340,7 @@ class bankCog(commands.Cog):
 				embed.add_field(name = '\u200b\n', value = '창고가 비었습니다.\n\u200b')
 				return await ctx.send(embed=embed, tts=False)
 		else:
-			toggle_documents = list(self.jungsan_db.find({"itemstatus" : "미판매", "item" : args}))
+			toggle_documents = list(self.jungsan_db.find({"itemstatus" : "미판매", "item" : args}).sort("_id", pymongo.ASCENDING))
 
 			if len(toggle_documents) == 0:
 				return await ctx.send(f"`창고`에 해당 아이템(`{args}`)이 없습니다!")
@@ -4352,18 +4384,18 @@ class bankCog(commands.Cog):
 				return await ctx.send(f"**{commandSetting[57][0]} [검색조건] [검색값]** 형식으로 입력 해주세요! **[검색조건]**은 **[아이디, 보스, 아이템, 날짜]** 네가지 중 **1개**를 입력 하셔야합니다!")
 			else:
 				if input_distribute_partial_finish[0] == "아이디":
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"before_jungsan_ID":{"$in":[input_distribute_partial_finish[1]]}}, {"itemstatus":"분배중"}]}).limit(25))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"before_jungsan_ID":{"$in":[input_distribute_partial_finish[1]]}}, {"itemstatus":"분배중"}]}).limit(25).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_partial_finish[0] == "보스":
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"boss":input_distribute_partial_finish[1]}, {"itemstatus":"분배중"}]}).limit(25))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"boss":input_distribute_partial_finish[1]}, {"itemstatus":"분배중"}]}).limit(25).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_partial_finish[0] == "아이템":
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"item":input_distribute_partial_finish[1]}, {"itemstatus":"분배중"}]}).limit(25))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"item":input_distribute_partial_finish[1]}, {"itemstatus":"분배중"}]}).limit(25).sort("_id", pymongo.ASCENDING))
 				elif input_distribute_partial_finish[0] == "날짜":
 					try:
 						start_search_date : str = datetime.datetime.now().replace(year = int(input_distribute_partial_finish[1][:4]), month = int(input_distribute_partial_finish[1][5:7]), day = int(input_distribute_partial_finish[1][8:10]), hour = 0, minute = 0, second = 0)
 						end_search_date : str = start_search_date + datetime.timedelta(days = 1)
 					except:
 						return await ctx.send(f"**[날짜] [검색값]**은 0000-00-00 형식으로 입력 해주세요!")
-					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"getdate":{"$gte":start_search_date, "$lt":end_search_date}}, {"itemstatus":"분배중"}]}).limit(25))
+					jungsan_document = list(self.jungsan_db.find({"$and" : [{"$or":[{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"getdate":{"$gte":start_search_date, "$lt":end_search_date}}, {"itemstatus":"분배중"}]}).limit(25).sort("_id", pymongo.ASCENDING))
 				else:
 					return await ctx.send(f"**[검색조건]**이 잘못 됐습니다. **[검색조건]**은 **[아이디, 보스, 아이템, 날짜]** 네가지 중 **1개**를 입력 하셔야합니다!")
 
