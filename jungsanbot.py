@@ -4374,6 +4374,7 @@ class bankCog(commands.Cog):
 
 			return await ctx.send(embed = embed)
 
+	################ 부분정산 #################
 	@commands.command(name=commandSetting[57][0], aliases=commandSetting[57][1:])
 	async def partial_jungsan(self, ctx, *, args : str = None):
 		if ctx.message.channel.id != int(basicSetting[6]) or basicSetting[6] == "":
