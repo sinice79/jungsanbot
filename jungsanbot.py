@@ -1105,6 +1105,7 @@ class memberCog(commands.Cog):
 		return await ctx.send(f"{ctx.author.mention}님, 아이디를 **[{member_data['game_ID']}]**에서 **[{args}]**로 변경하였습니다.")
 
 	################ 혈원아이디 정보 ################ 
+	@is_manager()
 	@commands.command(name=commandSetting[55][0], aliases=commandSetting[55][1:])
 	async def member_infomation(self, ctx, *, args : str = None):
 		if ctx.message.channel.id != int(basicSetting[6]) or basicSetting[6] == "":
@@ -1163,6 +1164,7 @@ class memberCog(commands.Cog):
 		return await ctx.send(f"**[{input_regist_data[0]}] [{input_regist_data[1]}]**(으)로 혈원 등록 완료!")
 
 	################ 혈원아이디 변경 ################ 
+	@is_manager()
 	@commands.command(name=commandSetting[54][0], aliases=commandSetting[54][1:])
 	async def member_forced_modify(self, ctx, *, args : str = None):
 		if ctx.message.channel.id != int(basicSetting[6]) or basicSetting[6] == "":
@@ -3840,6 +3842,7 @@ class bankCog(commands.Cog):
 		return await ctx.send(embed = embed)
 
 	################ 저축 ################ 
+	@is_manager()
 	@commands.command(name=commandSetting[29][0], aliases=commandSetting[29][1:])
 	async def bank_save_money(self, ctx, *, args : str = None):
 		if ctx.message.channel.id != int(basicSetting[6]):
@@ -3924,6 +3927,7 @@ class bankCog(commands.Cog):
 		return 
 
 	################ 뽑기저축 ################ 
+	@is_manager()
 	@commands.command(name=commandSetting[48][0], aliases=commandSetting[48][1:])
 	async def bank_ladder_save_money(self, ctx, *, args : str = None):
 		if ctx.message.channel.id != int(basicSetting[6]):
