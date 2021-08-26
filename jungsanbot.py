@@ -601,7 +601,8 @@ class adminCog(commands.Cog):
 			member_command_list += f"{','.join(commandSetting[28])}\n"   # 계좌
 			member_command_list += f"{','.join(commandSetting[58])} [금액] [대상아이디]\n"   # 이체
 			member_command_list += f"{','.join(commandSetting[44])} (아이템명)\n"   # 창고
-			member_command_list += f"{','.join(commandSetting[11])}\n\n"   # 정산확인
+			member_command_list += f"{','.join(commandSetting[11])} (아이디)\n"   # 정산확인
+			member_command_list += f"{','.join(commandSetting[11])} (검색조건) (검색값)\n\n"   # 정산확인
 			
 			member_command_list += f"{','.join(commandSetting[12])} [보스] [아이템] [루팅자] [아이디1] [아이디2] ... (참고이미지 url)\n"   # 등록
 			member_command_list += f"{','.join(commandSetting[12])} [보스] [아이템1] [아이템2] [아이템3] /[루팅자] [아이디1] [아이디2] ... (참고이미지 url)\n※ 루팅자 앞에 [ / ]을 넣어서 아이템 여러개 동시 등록 가능\n"   # 멀티등록
@@ -620,8 +621,8 @@ class adminCog(commands.Cog):
 			member_command_list += f"{','.join(commandSetting[19])} [순번] [변경보스명]\n"   # 보스수정
 			member_command_list += f"{','.join(commandSetting[20])} [순번] [변경아이템명]\n"   # 아이템수정
 			member_command_list += f"{','.join(commandSetting[21])} [순번] [변경아이디]\n"   # 루팅자수정
-			member_command_list += f"{','.join(commandSetting[22])} [순번] [추가아이디]\n"   # 참여자추가
-			member_command_list += f"{','.join(commandSetting[23])} [순번] [삭제아이디]\n"   # 참여자삭제
+			member_command_list += f"{','.join(commandSetting[22])} [순번] [추가아이디1] [추가아이디2] ...\n"   # 참여자추가
+			member_command_list += f"{','.join(commandSetting[23])} [순번] [삭제아이디1] [삭제아이디2] ...\n"   # 참여자삭제
 			member_command_list += f"{','.join(commandSetting[50])} [순번] [수정이미지 url]\n"   # 이미지수정
 			member_command_list += f"{','.join(commandSetting[24])} [순번] [금액]\n"   # 판매
 			member_command_list += f"{','.join(commandSetting[45])} [순번] [금액] [뽑을인원]\n"   # 뽑기판매
@@ -2965,13 +2966,28 @@ class manageCog(commands.Cog):
 			return await ctx.send(f"{ctx.author.mention}님은 혈원으로 등록되어 있지 않습니다!")
 
 		if not args:
-			return await ctx.send(f"**{commandSetting[22][0]} [순번] [아이디]** 양식으로 등록 해주세요.")
+			return await ctx.send(f"**{commandSetting[22][0]} [순번] [아이디1] [아이디2] ...** 양식으로 등록 해주세요.")
 		
 		input_regist_data : list = args.split()
 		len_input_regist_data = len(input_regist_data)
 
-		if len_input_regist_data != 2:
-			return await ctx.send(f"**{commandSetting[22][0]} [순번] [아이디]** 양식으로 등록 해주세요.")
+		try:
+			input_regist_data[0] = int(input_regist_data[0])
+		except:
+			return await ctx.send(f"**[순번]**은 숫자로 입력 해주세요.")
+
+		if len_input_regist_data < 2:
+			return await ctx.send(f"**{commandSetting[22][0]} [순번] [아이디1] [아이디2] ...** 양식으로 등록 해주세요.")
+
+		check_member_data : list = self.member_db.find({}).distinct('game_ID')
+		check_input_member_list : str = []
+
+		for game_id in input_regist_data[1:]:
+			if game_id not in check_member_data:
+				check_input_member_list.append(str(game_id))
+
+		if check_input_member_list:
+			return await ctx.send(f"```참여자 [{', '.join(check_input_member_list)}](은)는 혈원으로 등록되지 않은 아이디 입니다.```")
 		
 		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
@@ -2981,19 +2997,18 @@ class manageCog(commands.Cog):
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[13][0]}/{commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 등록건만 수정 가능합니다!")
 
-		if input_regist_data[1] in jungsan_data['before_jungsan_ID']:
-			return await ctx.send(f"```추가하려는 [참여자:{input_regist_data[1]}](이)가 등록된 [참여자] 목록에 있습니다!```")
-
-		check_member_data : dict = {}
-
+		check_input_member_list : str = []
+		for game_id in input_regist_data[1:]:
+			if game_id in jungsan_data['before_jungsan_ID']:
+				check_input_member_list.append(str(game_id))
+		
+		if check_input_member_list:
+			return await ctx.send(f"```추가하려는 [참여자:{', '.join(check_input_member_list)}](이)가 등록된 [참여자] 목록에 있습니다!```")
+		
 		tmp_member_list : list = []
-
-		check_member_data = self.member_db.find_one({"game_ID":input_regist_data[1]})
-		if not check_member_data:
-			return await ctx.send(f"```참여자 [{input_regist_data[1]}](은)는 혈원으로 등록되지 않은 아이디 입니다.```")
 		
 		tmp_member_list = jungsan_data["before_jungsan_ID"].copy()
-		tmp_member_list.append(check_member_data["game_ID"])
+		tmp_member_list += input_regist_data[1:]
 
 		input_time : datetime = datetime.datetime.now() + datetime.timedelta(hours = int(basicSetting[9]))
 		insert_data : dict = {}
@@ -3053,14 +3068,29 @@ class manageCog(commands.Cog):
 			return await ctx.send(f"{ctx.author.mention}님은 혈원으로 등록되어 있지 않습니다!")
 
 		if not args:
-			return await ctx.send(f"**{commandSetting[23][0]} [순번] [아이디]** 양식으로 등록 해주세요.")
+			return await ctx.send(f"**{commandSetting[23][0]} [순번] [아이디1] [아이디2] ...** 양식으로 등록 해주세요.")
 		
 		input_regist_data : list = args.split()
 		len_input_regist_data = len(input_regist_data)
 
-		if len_input_regist_data != 2:
-			return await ctx.send(f"**{commandSetting[23][0]} [순번] [아이디]** 양식으로 등록 해주세요.")
-		
+		try:
+			input_regist_data[0] = int(input_regist_data[0])
+		except:
+			return await ctx.send(f"**[순번]**은 숫자로 입력 해주세요.")
+
+		if len_input_regist_data < 2:
+			return await ctx.send(f"**{commandSetting[23][0]} [순번] [아이디1] [아이디2] ...** 양식으로 등록 해주세요.")
+
+		check_member_data : list = self.member_db.find({}).distinct('game_ID')
+		check_input_member_list : str = []
+
+		for game_id in input_regist_data[1:]:
+			if game_id not in check_member_data:
+				check_input_member_list.append(str(game_id))
+
+		if check_input_member_list:
+			return await ctx.send(f"```참여자 [{', '.join(check_input_member_list)}](은)는 혈원으로 등록되지 않은 아이디 입니다.```")
+
 		if "manager" in member_data['permissions']:
 			jungsan_data : dict = self.jungsan_db.find_one({"$and" : [{"_id":int(input_regist_data[0])}, {"itemstatus":"미판매"}]})
 		else:
@@ -3069,19 +3099,18 @@ class manageCog(commands.Cog):
 		if not jungsan_data:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 정산 내역이 **[ 미판매 ]**중이 아니거나 없습니다. **[ {commandSetting[13][0]}/{commandSetting[16][0]} ]** 명령을 통해 확인해주세요.\n※정산 등록 내역 수정은 **[ 분배상태 ]**가 **[ 미판매 ]** 중인 등록건만 수정 가능합니다!")
 
-		if input_regist_data[1] not in jungsan_data['before_jungsan_ID']:
-			return await ctx.send(f"```삭제하려는 [참여자:{input_regist_data[1]}](이)가 등록된 [참여자] 목록에 없습니다!```")
+		check_input_member_list : str = []
+		for game_id in input_regist_data[1:]:
+			if game_id not in jungsan_data['before_jungsan_ID']:
+				check_input_member_list.append(str(game_id))
 
-		check_member_data : dict = {}
+		if check_input_member_list:
+			return await ctx.send(f"```삭제하려는 [참여자:{', '.join(check_input_member_list)}](이)가 등록된 [참여자] 목록에 없습니다!```")
 
 		tmp_member_list : list = []
-
-		check_member_data = self.member_db.find_one({"game_ID":input_regist_data[1]})
-		if not check_member_data:
-			return await ctx.send(f"```참여자 [{input_regist_data[1]}](은)는 혈원으로 등록되지 않은 아이디 입니다.```")
 		
 		tmp_member_list = jungsan_data["before_jungsan_ID"].copy()
-		tmp_member_list.remove(check_member_data["game_ID"])
+		tmp_member_list = [item for item in tmp_member_list if item not in input_regist_data[1:]]
 
 		if len(tmp_member_list) <= 0:
 			return await ctx.send(f"```참여자 [{input_regist_data[1]}]를 삭제하면 참여자가 [0]명이 되므로 삭제할 수 없습니다!```")
