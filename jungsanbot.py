@@ -4332,80 +4332,106 @@ class bankCog(commands.Cog):
 
 	################ 창고검색 #################
 	@commands.command(name=commandSetting[44][0], aliases=commandSetting[44][1:])
-	async def guild_inventory_search(self, ctx, *, args : str = None):
+	async def guild_inventory_search(self, ctx, *, args: str = None):
 		if ctx.message.channel.id != int(basicSetting[6]) or basicSetting[6] == "":
 			return
 
-		member_data : dict = self.member_db.find_one({"_id":ctx.author.id})
+		member_data: dict = self.member_db.find_one({"_id": ctx.author.id})
 
 		if not member_data:
 			return await ctx.send(f"{ctx.author.mention}님은 혈원으로 등록되어 있지 않습니다!")
 
 		if not args:
 			pipeline = [
-						{"$match": {"itemstatus":"미판매"}},  # 조건
-						{"$group": {"_id": "$item", "count": {"$sum":1}}}  # 요런식으로 변환해준다.
-					]
+				{"$match": {"itemstatus": "미판매"}},  # 조건
+				{"$group": {"_id": "$item", "count": {"$sum": 1}}}  # 요런식으로 변환해준다.
+			]
 
 			item_counts = self.jungsan_db.aggregate(pipeline)
 
-			sorted_item_counts : dict = sorted(item_counts, key=lambda item_counts:item_counts['count'], reverse = True)
+			sorted_item_counts: dict = sorted(item_counts, key=lambda item_counts: item_counts['count'], reverse=True)
 			len_sorted_item_counts = len(sorted_item_counts)
-			#print(sorted_item_counts)
+			# print(sorted_item_counts)
 
-			embed_list : list = []
-			embed_index : int = 0
-			embed_cnt : int = 0
+			embed_list: list = []
+			embed_index: int = 0
+			embed_cnt: int = 0
 
-			embed = discord.Embed(title = f'📦  `창고 내역`', description = "", color = 0x00ff00)
+			embed = discord.Embed(title=f'📦  `창고 내역`', description="", color=0x00ff00)
 
 			embed_list.append(embed)
 
-			if len_sorted_item_counts > 0 :
+			if len_sorted_item_counts > 0:
 				for item_data in sorted_item_counts:
 					embed_cnt += 1
-					if embed_cnt > 24 :
+					if embed_cnt > 24:
 						embed_cnt = 0
 						embed_index += 1
 						tmp_embed = discord.Embed(
-							title = "",
-							description = "",
+							title="",
+							description="",
 							color=0x00ff00
-							)
+						)
 						embed_list.append(tmp_embed)
-					embed_list[embed_index].add_field(name = item_data['_id'], value = f"```{item_data['count']}```")
-				embed.set_footer(text = f"전체 아이템 종류  :  {len_sorted_item_counts}개")
+					embed_list[embed_index].add_field(name=item_data['_id'], value=f"```{item_data['count']}```")
+				embed.set_footer(text=f"전체 아이템 종류  :  {len_sorted_item_counts}개")
 				if len(embed_list) > 1:
 					for embed_data in embed_list:
 						await asyncio.sleep(0.1)
-						await ctx.send(embed = embed_data)
+						await ctx.send(embed=embed_data)
 					return
 				else:
 					return await ctx.send(embed=embed, tts=False)
-			else :
-				embed.add_field(name = '\u200b\n', value = '창고가 비었습니다.\n\u200b')
+			else:
+				embed.add_field(name='\u200b\n', value='창고가 비었습니다.\n\u200b')
 				return await ctx.send(embed=embed, tts=False)
+		elif args.find("/") != -1:
+			toggle_documents = list(self.jungsan_db.find({"itemstatus": "미판매", "regist": args[1:]}))
+
+			if len(toggle_documents) == 0:
+				return await ctx.send(f"{args[1:]}님은 가지고 있는 아이템이 없습니다!")
+
+			toggle_item_list: list = []
+			tmp_toggle_item_list: list = []
+
+			for toggle in toggle_documents:
+				tmp_toggle_item_list.append(toggle["item"])
+
+			toggle_name_list = list(set(tmp_toggle_item_list))
+
+			toggle_name_list.sort()
+
+			for name in toggle_name_list:
+				toggle_item_list.append(f"{name}({tmp_toggle_item_list.count(name)}개)")
+
+			embed = discord.Embed(title=f'📦  `{args[1:]}`님 소지 아이템 (총 `{len(toggle_name_list)}`개)', description="",
+								  color=0x00ff00)
+			embed.description = f"```{', '.join(toggle_item_list)}```"
+
+			return await ctx.send(embed=embed)
 		else:
-			toggle_documents = list(self.jungsan_db.find({"itemstatus" : "미판매", "item" : args}).sort("_id", pymongo.ASCENDING))
+			toggle_documents = list(
+				self.jungsan_db.find({"itemstatus": "미판매", "item": args}).sort("_id", pymongo.ASCENDING))
 
 			if len(toggle_documents) == 0:
 				return await ctx.send(f"`창고`에 해당 아이템(`{args}`)이 없습니다!")
 
-			toggle_list : list = []
-			tmp_toggle_list : list = []
+			toggle_list: list = []
+			tmp_toggle_list: list = []
 
 			for toggle in toggle_documents:
 				tmp_toggle_list.append(toggle["toggle"])
-			
+
 			toggle_name_list = list(set(tmp_toggle_list))
 
 			for name in toggle_name_list:
 				toggle_list.append(f"{name}({tmp_toggle_list.count(name)}개)")
 
-			embed = discord.Embed(title = f'📦  `{args}` 소지자 (총 `{len(toggle_name_list)}`명)', description = "", color = 0x00ff00)	
+			embed = discord.Embed(title=f'📦  `{args}` 소지자 (총 `{len(toggle_name_list)}`명)', description="",
+								  color=0x00ff00)
 			embed.description = f"```{', '.join(toggle_list)}```"
 
-			return await ctx.send(embed = embed)
+			return await ctx.send(embed=embed)
 
 	################ 부분정산 #################
 	@commands.command(name=commandSetting[57][0], aliases=commandSetting[57][1:])
