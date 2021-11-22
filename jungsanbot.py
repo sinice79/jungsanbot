@@ -2856,7 +2856,7 @@ class manageCog(commands.Cog):
 
 			return await ctx.send(f"📥 정산 등록 내역 수정 완료! 📥")
 		else:
-			return await ctx.send(f"**수정**이 취소되었습니다.\n")
+			return await ctx.send(f"**수정**이 취소되었습니다!\n")
 
 	################ 루팅자수정 ################ 
 	@commands.command(name=commandSetting[21][0], aliases=commandSetting[21][1:])
@@ -4678,13 +4678,13 @@ class bankCog(commands.Cog):
 							"reason":f"[순번:{jungsan_data['_id']}] - 정산금 혈비 적립"
 				}
 				result_guild_log = self.guild_db_log.insert_one(insert_log_data)
-				result_str += f"**[ 순번 : {jungsan_data['_id']} ]**   💰판매금 **[ {after_tax_price} ]**(세율 {basicSetting[7]}% 적용) 혈비 적립 완료!"
+				result_str += f"**[ 순번 : {jungsan_data['_id']} ]**   💰판매금 **[ {after_tax_price} ]**(세율 {basicSetting[7]}% 적용) 혈비 적립 완료!\n"
 			else:
 				result = self.jungsan_db.update_one({"_id":jungsan_data['_id']}, {"$set":{"price":input_sell_price_data[1], "each_price":result_each_price, "modifydate":datetime.datetime.now(), "itemstatus":"분배중"}}, upsert = False)
 				if result.raw_result["nModified"] < 1 and "upserted" not in result.raw_result:
 					return await ctx.send(f"{ctx.author.mention}, 판매 등록 실패!") 			
 
-				result_str += f"**[ 순번 : {jungsan_data['_id']} ]**   💰판매금 **[ {input_sell_price_data[1]} ]** 등록 완료! 분배를 시작합니다."
+				result_str += f"**[ 순번 : {jungsan_data['_id']} ]**   💰판매금 **[ {input_sell_price_data[1]} ]** 등록 완료! 분배를 시작합니다.\n"
 
 		return await ctx.send(result_str)
 
