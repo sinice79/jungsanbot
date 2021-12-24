@@ -4652,7 +4652,7 @@ class bankCog(commands.Cog):
 		except ValueError:
 			return await ctx.send(f"**[금액]**은 숫자로 입력 해주세요.")
 
-		jungsan_data_list : list = list(self.jungsan_db.find({"$and" : [{"$or" : [{"regist_ID" : str(ctx.author.id)}]}, {"item":input_sell_price_data[0]}, {"itemstatus":"미판매"}]}))
+		jungsan_data_list : list = list(self.jungsan_db.find({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"item":input_sell_price_data[0]}, {"itemstatus":"미판매"}]}))
 
 		if not jungsan_data_list:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 판매 내역이 **[ 미판매 ]** 중이 아니거나 없습니다. **[ {commandSetting[13][0]} ]** 명령을 통해 확인해주세요.")
@@ -4713,7 +4713,7 @@ class bankCog(commands.Cog):
 		except ValueError:
 			return await ctx.send(f"**[금액]**은 숫자로 입력 해주세요.")
 
-		jungsan_data_list : list = list(self.jungsan_db.find({"$and" : [{"$or" : [{"regist_ID" : str(ctx.author.id)}]}, {"item":input_sell_price_data[0]}, {"itemstatus":"미판매"}]}))
+		jungsan_data_list : list = list(self.jungsan_db.find({"$and" : [{"$or" : [{"toggle_ID" : str(ctx.author.id)}, {"regist_ID" : str(ctx.author.id)}]}, {"item":input_sell_price_data[0]}, {"itemstatus":"미판매"}]}))
 
 		if not jungsan_data_list:
 			return await ctx.send(f"{ctx.author.mention}님! 등록하신 판매 내역이 **[ 미판매 ]** 중이 아니거나 없습니다. **[ {commandSetting[13][0]} ]** 명령을 통해 확인해주세요.")
