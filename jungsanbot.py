@@ -4727,13 +4727,15 @@ class bankCog(commands.Cog):
 		result_jungsan_str_list : list = []
 		result_jungsan_str : str = ""
 
-		while len(temp_jungsan_document) > 0:
+		# while len(temp_jungsan_document) > 0:
+		loop_count = (len(temp_jungsan_document))//5 + 1
+		for _ in range(min(loop_count, 5)):
 			temp : list = []
 			for i in range(5):
-				data_dict = temp_jungsan_document.pop(0)
-				temp.append(Button(style=ButtonStyle.gray, id=f"{list_height}_{i}:{data_dict['_id']}", label=f"[순번:{data_dict['_id']}] {data_dict['getdate'].strftime('%y-%m-%d')}|{data_dict['boss']}|{data_dict['item']}"))
 				if len(temp_jungsan_document) <= 0:
 					break
+				data_dict = temp_jungsan_document.pop(0)
+				temp.append(Button(style=ButtonStyle.gray, id=f"{list_height}_{i}:{data_dict['_id']}", label=f"[순번:{data_dict['_id']}] {data_dict['getdate'].strftime('%y-%m-%d')}|{data_dict['boss']}|{data_dict['item']}"))
 			list_height += 1
 			button_list.append(temp)
 
