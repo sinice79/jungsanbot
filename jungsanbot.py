@@ -4728,8 +4728,8 @@ class bankCog(commands.Cog):
 		result_jungsan_str : str = ""
 
 		# while len(temp_jungsan_document) > 0:
-		loop_count = (len(temp_jungsan_document))//5 + 1
-		for _ in range(min(loop_count, 5)):
+		loop_count = (len(temp_jungsan_document))//4 + 1
+		for _ in range(min(loop_count, 4)):
 			temp : list = []
 			for i in range(5):
 				if len(temp_jungsan_document) <= 0:
@@ -4746,7 +4746,7 @@ class bankCog(commands.Cog):
 		waiting_time : str = 120
 		embed_result = discord.Embed(title = f"📜 [{input_sell_price_data[0]}]에 대한 판매 예정목록",description = "",color=0x00ff00)
 		embed_result.add_field(name = "\u200b", value = f"판매예정순번 : -")
-		embed_result.set_footer(text="판매목록은 최대 25개까지 표시됩니다.")
+		embed_result.set_footer(text="판매목록은 최대 20개까지 표시됩니다.")
 
 		msg = await ctx.send(embed = embed_result, components = button_list)
 
