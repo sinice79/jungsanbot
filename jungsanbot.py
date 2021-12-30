@@ -4732,10 +4732,10 @@ class bankCog(commands.Cog):
 		for _ in range(min(loop_count, 20)):
 			temp : list = []
 			for i in range(5):
-				if len(temp_jungsan_document) <= 0:
-					break
 				data_dict = temp_jungsan_document.pop(0)
 				temp.append(Button(style=ButtonStyle.gray, id=f"{list_height}_{i}:{data_dict['_id']}", label=f"[순번:{data_dict['_id']}] {data_dict['getdate'].strftime('%y-%m-%d')}|{data_dict['boss']}|{data_dict['item']}"))
+				if len(temp_jungsan_document) <= 0:
+					break
 			list_height += 1
 			button_list.append(temp)
 
