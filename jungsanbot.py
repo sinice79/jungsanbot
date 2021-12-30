@@ -4668,8 +4668,6 @@ class bankCog(commands.Cog):
 				if result.raw_result["nModified"] < 1 and "upserted" not in result.raw_result:
 					return await ctx.send(f"{ctx.author.mention}, 혈비 등록 실패!")
 				result_guild = self.guild_db.update_one({"_id":"guild"}, {"$inc":{"guild_money":after_tax_price}}, upsert = True)
-				if result_guild.raw_result["nModified"] < 1 and "upserted" not in result_guild.raw_result:
-					return await ctx.send(f"{ctx.author.mention}, 혈비 적립 실패!")
 				insert_log_data = {
 							"in_out_check":True,  # True : 입금, False : 출금
 							"log_date":datetime.datetime.now(),
@@ -4761,7 +4759,7 @@ class bankCog(commands.Cog):
 				if listid == "confirm":
 					break
 				elif listid == "exit":
-					embed_result.title = f"📜 {input_sell_price_data[0]}]에 대한 판매취소!"
+					embed_result.title = f"📜 [{input_sell_price_data[0]}]에 대한 판매취소!"
 					embed_result.description = f""
 					await msg.edit(embed = embed_result, components=[])
 					return
@@ -4770,7 +4768,7 @@ class bankCog(commands.Cog):
 					result_jungsan_str_list = []
 					result_jungsan_str = ""
 					embed = interaction.message.embeds[0]
-					embed.title = f"📜 {input_sell_price_data[0]}]에 대한 판매 예정목록 초기화!"
+					embed.title = f"📜 [{input_sell_price_data[0]}]에 대한 판매 예정목록 초기화!"
 					embed.description = f""
 					embed.set_field_at(index = len(embed.fields)-1, name = "\u200b", value = f"판매예정순번 : -", inline=False)
 					button_list = copy.deepcopy(init_button_list)
@@ -4784,13 +4782,13 @@ class bankCog(commands.Cog):
 					jungsan_index : str = listid[listid.find(':')+1:]
 					result_jungsan_list.append(jungsan_index)
 					result_jungsan_str_list.append(f"{interaction.component.label}")
-					embed.title = f"📜 {input_sell_price_data[0]}]에 대한 판매 예정목록"
+					embed.title = f"📜 [{input_sell_price_data[0]}]에 대한 판매 예정목록"
 					result_jungsan_str = "\n".join(result_jungsan_str_list)
 					embed.description = f"```md\n{result_jungsan_str}```"
 					embed.set_field_at(index = len(embed.fields)-1, name = "\u200b", value = f"판매예정순번 : {', '.join(result_jungsan_list)}", inline=False)
 					await msg.edit(embed = embed, components=button_list)
 			except asyncio.TimeoutError:
-				embed_result.title = f"📜 {input_sell_price_data[0]}]에 대한 판매취소!"
+				embed_result.title = f"📜 [{input_sell_price_data[0]}]에 대한 판매취소!"
 				embed_result.description = f"시간초과!"
 				await msg.edit(embed = embed_result, components=[])
 				return
@@ -4808,8 +4806,6 @@ class bankCog(commands.Cog):
 					if result.raw_result["nModified"] < 1 and "upserted" not in result.raw_result:
 						return await ctx.send(f"{ctx.author.mention}, 혈비 등록 실패!")
 					result_guild = self.guild_db.update_one({"_id":"guild"}, {"$inc":{"guild_money":after_tax_price}}, upsert = True)
-					if result_guild.raw_result["nModified"] < 1 and "upserted" not in result_guild.raw_result:
-						return await ctx.send(f"{ctx.author.mention}, 혈비 적립 실패!")
 					insert_log_data = {
 								"in_out_check":True,  # True : 입금, False : 출금
 								"log_date":datetime.datetime.now(),
@@ -4826,11 +4822,7 @@ class bankCog(commands.Cog):
 						return await ctx.send(f"{ctx.author.mention}, 판매 등록 실패!") 			
 					result_str_list.append(f"[순번:{jungsan_data['_id']}] 💰판매금 [{input_sell_price_data[1]}] 등록 완료! 분배를 시작합니다.\n")
 
-				# result = self.jungsan_db.update_one({"_id":jungsan_data['_id']}, {"$set":{"before_jungsan_ID":[], "after_jungsan_ID":sorted(jungsan_data['after_jungsan_ID']+jungsan_data['before_jungsan_ID']), "modifydate":datetime.datetime.now(), "itemstatus":"분배완료"}}, upsert = True)
-				if result.raw_result["nModified"] < 1 and "upserted" not in result.raw_result:
-					await ctx.send(f"{ctx.author.mention}, 부분판매 실패!") 
-
-		embed_result.title = f"📜 {input_sell_price_data[0]}]에 대한 판매완료!"
+		embed_result.title = f"📜 [{input_sell_price_data[0]}]에 대한 판매완료!"
 		embed_result.description = f"```md\n{''.join(result_str_list)}```"
 		embed_result.set_field_at(index = len(embed_result.fields)-1, name = "\u200b", value = f"판매완료순번 : {', '.join(result_jungsan_list)}", inline=False)
 		await msg.edit(embed = embed_result, components=[])		
