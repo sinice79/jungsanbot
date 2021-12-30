@@ -4727,7 +4727,9 @@ class bankCog(commands.Cog):
 		result_jungsan_str_list : list = []
 		result_jungsan_str : str = ""
 
-		while len(temp_jungsan_document) > 0:
+		# while len(temp_jungsan_document) > 0:
+		loop_count = len(temp_jungsan_document)
+		for _ in range(min(loop_count, 25)):
 			temp : list = []
 			for i in range(5):
 				data_dict = temp_jungsan_document.pop(0)
