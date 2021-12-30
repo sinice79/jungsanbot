@@ -3288,8 +3288,6 @@ class manageCog(commands.Cog):
 			if result.raw_result["nModified"] < 1 and "upserted" not in result.raw_result:
 				return await ctx.send(f"{ctx.author.mention}, 혈비 등록 실패!")
 			result_guild = self.guild_db.update_one({"_id":"guild"}, {"$inc":{"guild_money":after_tax_price}}, upsert = True)
-			if result_guild.raw_result["nModified"] < 1 and "upserted" not in result_guild.raw_result:
-				return await ctx.send(f"{ctx.author.mention}, 혈비 적립 실패!")
 			insert_log_data = {
 						"in_out_check":True,  # True : 입금, False : 출금
 						"log_date":datetime.datetime.now() + datetime.timedelta(hours = int(basicSetting[9])),
