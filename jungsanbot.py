@@ -4729,7 +4729,7 @@ class bankCog(commands.Cog):
 
 		# while len(temp_jungsan_document) > 0:
 		loop_count = len(temp_jungsan_document) - 1
-		for _ in range(min(loop_count, 25)):
+		for _ in range(min(loop_count, 20)):
 			temp : list = []
 			for i in range(5):
 				if len(temp_jungsan_document) <= 0:
