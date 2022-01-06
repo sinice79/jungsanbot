@@ -4389,7 +4389,7 @@ class bankCog(commands.Cog):
 			search_args = args[1:]
 
 			pipeline = [
-						{"$match": {"regist":search_args}},  # 조건
+						{"$match": {"$and":[{"regist":search_args},{"itemstatus":"미판매"}]}},  # 조건
 						{"$group": {"_id": "$item", "count": {"$sum":1}}}  # 요런식으로 변환해준다.
 					]
 
@@ -4449,7 +4449,7 @@ class bankCog(commands.Cog):
 			# return await ctx.send(embed = embed)
 		else:
 			pipeline = [
-						{"$match": {"item":args}},  # 조건
+						{"$match": {"$and":[{"item":args},{"itemstatus":"미판매"}]}},  # 조건
 						{"$group": {"_id": "$regist", "count": {"$sum":1}}}  # 요런식으로 변환해준다.
 					]
 
